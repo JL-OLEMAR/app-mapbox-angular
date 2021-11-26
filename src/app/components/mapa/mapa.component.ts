@@ -55,15 +55,23 @@ export class MapaComponent implements OnInit {
 
   // Agregar marcadores
   agregarMarcadores (marcador: Lugar): void {
-    const html = `<h2>${marcador.nombre}</h2>
-                  <br>
-                  <button>Borrar</button>`
+    // crea un elemento HTML "h2"
+    const h2 = document.createElement('h2')
+    h2.innerText = marcador.nombre
+
+    // crea un elemento HTML "button"
+    const btnBorrar = document.createElement('button')
+    btnBorrar.innerText = 'Borrar'
+
+    // crea un elemento HTML "div"
+    const div = document.createElement('div')
+    div.append(h2, btnBorrar)
 
     // Popup se usa para mostrar información sobre el marcador
     const customPopup = new mapboxgl.Popup({
       offset: 25, // se usa para que el popup no se encuentre sobre el marcador, unidades en pixeles
       closeOnClick: false // no se cierra al hacer click en el mapa
-    }).setHTML(html)
+    }).setDOMContent(div)
 
     // Crear el marcador en el mapa
     const marker = new mapboxgl.Marker({
@@ -81,6 +89,11 @@ export class MapaComponent implements OnInit {
       console.log(lngLat)
 
       // TODO: crear evento para emitir las coordenadas de este marcador
+    })
+
+    btnBorrar.addEventListener('click', () => {
+      marker.remove()
+      // TODO: eliminar el marcador mediante sockets
     })
   }
 
