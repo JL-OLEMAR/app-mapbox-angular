@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core'
 import { BrowserModule } from '@angular/platform-browser'
+import { HttpClientModule } from '@angular/common/http'
 import { SocketIoModule } from 'ngx-socket-io'
 
 import { AppComponent } from './app.component'
@@ -13,6 +14,7 @@ import { environment } from '../environments/environment'
   ],
   imports: [
     BrowserModule,
+    HttpClientModule,
     SocketIoModule.forRoot(environment.socketConfig)
   ],
   providers: [],
