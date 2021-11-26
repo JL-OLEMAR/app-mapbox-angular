@@ -65,12 +65,36 @@ export class MapaComponent implements OnInit {
       closeOnClick: false // no se cierra al hacer click en el mapa
     }).setHTML(html)
 
-    new mapboxgl.Marker({
+    // Crear el marcador en el mapa
+    const marker = new mapboxgl.Marker({
       draggable: true, // Permite arrastrar el marcador
       color: marcador.color
     })
       .setLngLat([marcador.lng, marcador.lat])
       .setPopup(customPopup)
       .addTo(this.mapa)
+
+    // Evento para cuando se arrastra el marcador
+    marker.on('drag', () => {
+      // Obtener la posición del marcador
+      const lngLat = marker.getLngLat()
+      console.log(lngLat)
+
+      // TODO: crear evento para emitir las coordenadas de este marcador
+    })
+  }
+
+  // crear marcador
+  crearMarcador (): void {
+    const customMarker: Lugar = {
+      id: new Date().toISOString(),
+      nombre: 'Sin nombre',
+      lng: -75.75512993582937,
+      lat: 45.349977429009954,
+      // Función para generar un color HEX random
+      color: '#' + Math.floor(Math.random() * 16777215).toString(16)
+    }
+
+    this.agregarMarcadores(customMarker)
   }
 }
