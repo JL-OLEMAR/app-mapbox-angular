@@ -1,13 +1,17 @@
+/* eslint-disable @typescript-eslint/no-dynamic-delete */
 import { Component, OnInit } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import * as mapboxgl from 'mapbox-gl'
 
+import { environment } from '../../../environments/environment'
 import { Lugar } from '../../interfaces/interfaces'
 import { WebsocketService } from '../../services/websocket.service'
 
-interface RespMarcadores {
-  [key: string]: Lugar
-}
+// Interface que devuelve solo los lugares
+interface RespMarcadores {[key: string]: Lugar}
+
+// Interface que devuelve todos sus keys y valores
+interface RespMarkerMapBox {[key: string]: mapboxgl.Marker}
 
 @Component({
   selector: 'app-mapa',
@@ -17,6 +21,7 @@ interface RespMarcadores {
 export class MapaComponent implements OnInit {
   mapa!: mapboxgl.Map
   lugares: RespMarcadores = {}
+  markersMapbox: RespMarkerMapBox = {}
 
   constructor (
     private readonly http: HttpClient,
@@ -24,7 +29,7 @@ export class MapaComponent implements OnInit {
   ) {}
 
   ngOnInit (): void {
-    this.http.get<RespMarcadores>('http://localhost:5000/mapa')
+    this.http.get<RespMarcadores>(`${environment.socketConfig.url}/mapa`)
       .subscribe((lugares) => {
         this.lugares = lugares
         this.crearMapa()
@@ -36,17 +41,21 @@ export class MapaComponent implements OnInit {
   // Escuchar sockets
   escucharSockets (): void {
     // marcador-nuevo
-    this.wsService.listen('marcador-nuevo').subscribe((marcador: Lugar) => {
-      this.agregarMarcadores(marcador)
-    })
+    this.wsService.listen('marcador-nuevo')
+      .subscribe((marcador: Lugar) => (this.agregarMarcadores(marcador)))
 
     // marcador-mover
+
     // marcador-borrar
+    this.wsService.listen('marcador-borrar').subscribe((id: string) => {
+      this.markersMapbox[id].remove()
+      delete this.markersMapbox[id]
+    })
   }
 
   // Crear mapa
   crearMapa (): void {
-    (mapboxgl as any).accessToken = 'pk.eyJ1Ijoib2xlbWFyMTk5NiIsImEiOiJja3dlcXFqdXQwN2N2MnFvNHVmZzI1dndsIn0.pm7JqYKifHWCJMMxthZ_pg'
+    (mapboxgl as any).accessToken = environment.mapboxToken
     this.mapa = new mapboxgl.Map({
       container: 'mapa',
       style: 'mapbox://styles/mapbox/streets-v11',
@@ -54,13 +63,13 @@ export class MapaComponent implements OnInit {
       zoom: 15.8
     })
 
-    // 🧑‍💻🌟 Object.entries devuelve un array con las llaves y valores de un objeto
-    for (const [key, marcador] of Object.entries(this.lugares)) { // eslint-disable-line @typescript-eslint/no-unused-vars
+    // 🧑‍💻🌟 Object.entries devuelve un array con las llaves('key') y valores de un objeto
+    for (const [, marcador] of Object.entries(this.lugares)) {
       this.agregarMarcadores(marcador)
     }
   }
 
-  // Agregar marcadores
+  // Agregar marcadores al mapa
   agregarMarcadores (marcador: Lugar): void {
     // crea un elemento HTML "h2"
     const h2 = document.createElement('h2')
@@ -92,18 +101,21 @@ export class MapaComponent implements OnInit {
     // Evento para cuando se arrastra el marcador
     marker.on('drag', () => {
       // Obtener la posición del marcador
-      const lngLat = marker.getLngLat() // eslint-disable-line @typescript-eslint/no-unused-vars
+      marker.getLngLat()
 
       // TODO: crear evento para emitir las coordenadas de este marcador
     })
 
     btnBorrar.addEventListener('click', () => {
       marker.remove()
-      // TODO: eliminar el marcador mediante sockets
+      this.wsService.emit('marcador-borrar', marcador.id)
     })
+
+    // Asigna el marcador a una llave
+    this.markersMapbox[marcador.id] = marker
   }
 
-  // crear marcador
+  // crear un marcador para luego agregarlo al mapa
   crearMarcador (): void {
     const customMarker: Lugar = {
       id: new Date().toISOString(),

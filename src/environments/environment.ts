@@ -11,6 +11,7 @@ const config: SocketIoConfig = {
 
 export const environment = {
   production: false,
+  mapboxToken: 'pk.eyJ1Ijoib2xlbWFyMTk5NiIsImEiOiJja3dlcXFqdXQwN2N2MnFvNHVmZzI1dndsIn0.pm7JqYKifHWCJMMxthZ_pg',
   socketConfig: config
 }
 
