@@ -1,7 +1,9 @@
 import { Component, OnInit } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import * as mapboxgl from 'mapbox-gl'
+
 import { Lugar } from '../../interfaces/interfaces'
+import { WebsocketService } from '../../services/websocket.service'
 
 interface RespMarcadores {
   [key: string]: Lugar
@@ -16,7 +18,10 @@ export class MapaComponent implements OnInit {
   mapa!: mapboxgl.Map
   lugares: RespMarcadores = {}
 
-  constructor (private readonly http: HttpClient) {}
+  constructor (
+    private readonly http: HttpClient,
+    private readonly wsService: WebsocketService
+  ) {}
 
   ngOnInit (): void {
     this.http.get<RespMarcadores>('http://localhost:5000/mapa')
@@ -24,11 +29,17 @@ export class MapaComponent implements OnInit {
         this.lugares = lugares
         this.crearMapa()
       })
+
+    this.escucharSockets()
   }
 
   // Escuchar sockets
   escucharSockets (): void {
     // marcador-nuevo
+    this.wsService.listen('marcador-nuevo').subscribe((marcador: Lugar) => {
+      this.agregarMarcadores(marcador)
+    })
+
     // marcador-mover
     // marcador-borrar
   }
@@ -46,7 +57,6 @@ export class MapaComponent implements OnInit {
     // 🧑‍💻🌟 Object.entries devuelve un array con las llaves y valores de un objeto
     for (const [key, marcador] of Object.entries(this.lugares)) { // eslint-disable-line @typescript-eslint/no-unused-vars
       this.agregarMarcadores(marcador)
-      console.log(marcador)
     }
   }
 
@@ -82,8 +92,7 @@ export class MapaComponent implements OnInit {
     // Evento para cuando se arrastra el marcador
     marker.on('drag', () => {
       // Obtener la posición del marcador
-      const lngLat = marker.getLngLat()
-      console.log(lngLat)
+      const lngLat = marker.getLngLat() // eslint-disable-line @typescript-eslint/no-unused-vars
 
       // TODO: crear evento para emitir las coordenadas de este marcador
     })
@@ -106,5 +115,8 @@ export class MapaComponent implements OnInit {
     }
 
     this.agregarMarcadores(customMarker)
+
+    // emitir marcador-nuevo
+    this.wsService.emit('marcador-nuevo', customMarker)
   }
 }
