@@ -52,8 +52,7 @@ export class MapaComponent implements OnInit {
 
     // marcador-borrar
     this.wsService.listen('marcador-borrar').subscribe((id: string) => {
-      this.markersMapbox[id].remove()
-      delete this.markersMapbox[id]
+      this.markersMapbox[id].remove() // Eliminar el marcador
     })
   }
 
